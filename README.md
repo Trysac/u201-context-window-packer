@@ -8,8 +8,11 @@ Pack messages and documents into an LLM context window by priority, keep pinned 
 
 ## Problem
 
-Describe in two or three sentences the concrete problem this utility solves, who hits it, and what
-they do today without it. Replace this paragraph when the first real feature lands.
+Applications that build prompts from a system message, chat history and retrieved documents
+overflow the context window or cut text mid-word, mid-code block or in the wrong place. Ad hoc
+slicing drops the system prompt, reorders the conversation or leaves an unclosed code fence that
+confuses the model. This library decides what fits a token budget by priority, never drops pinned
+items, keeps the original order and truncates only at safe boundaries with a visible marker.
 
 ## Install
 
@@ -24,17 +27,26 @@ Requires Python 3.10 or newer. No runtime dependencies.
 ## Usage
 
 ```python
-import context_window_packer
+from context_window_packer import Item, pack
 
-# normalize() trims surrounding whitespace and lower-cases the text.
-print(context_window_packer.normalize("  Hello World "))  # -> "hello world"
-
-# Blank input is rejected explicitly instead of returning an empty string.
-try:
-    context_window_packer.normalize("   ")
-except ValueError as exc:
-    print(f"rejected: {exc}")
+result = pack(
+    [
+        Item("system", "you are a helpful assistant", pinned=True),
+        Item("doc", "word " * 50, priority=1, truncate="head"),
+    ],
+    budget=20,
+)
+print(result.tokens_used, [pi.id for pi in result.included], result.dropped)
 ```
+
+From the command line, pass a JSON array of item objects and a required budget:
+
+```sh
+python -m context_window_packer --budget 35 items.json
+```
+
+The result is printed as one JSON object with `included`, `dropped` and `tokens_used` keys;
+errors exit non-zero (`1` for a `PackError`, `2` for usage or IO problems).
 
 ## Documentation
 

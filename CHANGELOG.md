@@ -9,4 +9,5 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Added context-window-packer with priority-based packing, pinned-item support, safe head/tail truncation at word and code-fence boundaries, and a JSON CLI.
 - Initial project structure from the factory utility template.
